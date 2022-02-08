@@ -8,7 +8,8 @@ import java.util.stream.IntStream;
 public class Cal {
 		static HashMap<Integer,String> h1=new HashMap<>();
 		static HashMap<Integer,String> h2=new HashMap<>();
-		static Set<Integer> colorTest,deckTest;
+		static HashMap<String,Integer> pR,MaxpR; 
+		static Set<Integer> colorTest,deckTest,containcheck;
 		static Set<Integer> royal=new HashSet<>();
 		static Set<Integer> bigger=new  HashSet<>();
 		static int[] deck,inputDeck,maxAry;
@@ -196,10 +197,24 @@ public class Cal {
 			else
 				return "0";
 		}//end
+		//d為牌組，前面固定後面為0，填滿後面且不重複後丟出去
+		void helper(int lock, int index, int[] d, int last){
+			if(index==5) {
+				String r=Result(d);
+				pR.put(r,pR.get(r)+1);
+			}else {
+				for(int i=last+1;i<=52;i++) {
+					if(!containcheck.contains(i)) {
+						d[index]=i;
+						helper(lock,index+1,d,i);
+						d[index]=0;
+					}
+				}
+			}
+		}
 		
-		//待修改
 		HashMap<String,Integer> rate(int lock,int[]d){//鎖定牌數、導入陣列
-			HashMap<String,Integer> pR=new HashMap<>();
+			pR=new HashMap<>();
 			pR.put("500",0);
 			pR.put("200",0);
 			pR.put("120",0);
@@ -211,87 +226,13 @@ public class Cal {
 			pR.put("2",0);
 			pR.put("1",0);
 			pR.put("0",0);
-			String r=null;
-			int[] test=new int[5];
-			System.arraycopy(d, 0, test, 0, 5);
-			switch(lock) {
-				case 1:
-					for(int i=1;i<53;i++) {
-						test[1]=i;
-						if(check(test))
-							for(int j=i+1;j<53;j++) {
-								test[2]=j;
-								if(check(test))
-									for(int k=j+1;k<53;k++) {
-										test[3]=k;
-										if(check(test))
-											for(int l=k+1;l<53;l++) {
-												test[4]=l;											
-												if(check(test)) {
-													r=Result(test);
-													pR.put(r,pR.get(r)+1);
-												}
-											}
-										test[4]=0;
-									}
-								test[3]=0;
-								test[4]=0;
-							}
-						test[2]=0;
-						test[3]=0;
-						test[4]=0;
-					}
-					break;
-				case 2:
-					for(int i=1;i<53;i++) {
-						test[2]=i;
-						if(check(test))
-							for(int j=i+1;j<53;j++) {
-								test[3]=j;
-								if(check(test))
-									for(int k=j+1;k<53;k++) {
-										test[4]=k;
-										if(check(test)) {
-											r=Result(test);
-											pR.put(r,pR.get(r)+1);
-										}
-									}
-								test[4]=0;
-							}
-						test[3]=0;
-						test[4]=0;
-					}
-					break;
-				case 3:
-					for(int i=1;i<53;i++) {
-						test[3]=i;
-						if(check(test))
-							for(int j=i+1;j<53;j++) {
-								test[4]=j;
-								if(check(test)) {
-									r=Result(test);
-									pR.put(r,pR.get(r)+1);
-								}
-							}
-						test[4]=0;
-					}
-					break;
-				case 4:
-					for(int i=1;i<53;i++) {
-						test[4]=i;
-						if(check(test)) {
-							r=Result(test);
-							pR.put(r,pR.get(r)+1);
-						}
-					}
-					break;
-				case 5:
-					r=Result(test);
-					pR.put(r,pR.get(r)+1);
-				break;
+			containcheck=new HashSet<>();
+			for(int i=0;i<lock;i++) {
+				containcheck.add(d[i]);
 			}
-			
+			helper(lock,lock,d,0);			
 			return pR;
+
 		}
 		
 		boolean check(int[] a) {//檢測重複
@@ -328,7 +269,6 @@ public class Cal {
 			maxEx=0;
 			for(int i=1;i<=5;i++) { //1~5
 				iterdeck(0,0,i,new int[5],inputDeck);
-				System.out.println();
 			}
 			showResult=Color(maxAry[0])+" ";
 			for(int i=1;i<5;i++) {
@@ -337,7 +277,7 @@ public class Cal {
 			}			
 		}
 
-		void iterdeck(int index,int j, int lock, int[] temp, int[] deck) {  //return [maxEx, maxAry]
+		void iterdeck(int index,int j, int lock, int[] temp, int[] deck) {
 			double current=0;
 			int[] temp2= {0,0,0,0,0};
 			if(index<lock) {//未到最後一層
@@ -351,6 +291,7 @@ public class Cal {
 				}
 				current=exp(lock,temp2);
 				if(current>maxEx) {
+					MaxpR=rate(lock,temp2);
 					maxEx=current;
 					System.arraycopy(temp2,0,maxAry,0,5);
 				}
